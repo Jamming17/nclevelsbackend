@@ -1,9 +1,8 @@
-import express, { response } from "express";
+import express from "express";
 
 const router = express.Router();
 
 router.get("/getLevelId", async (req, res) => {
-
     try {
         const response = await fetch("http://www.boomlings.com/database/getGJLevels21.php", {
             method: "POST",
@@ -32,6 +31,7 @@ router.get("/getLevelId", async (req, res) => {
 });
 
 function processLevelResponse(responseString) {
+    console.log(responseString);
     const firstLevel = responseString.split("|")[0];
     const parts = firstLevel.split(":");
     const data = [];
@@ -40,7 +40,6 @@ function processLevelResponse(responseString) {
         data[index] = parts[i + 1];
         console.log(`Index ${index}:   ${parts[i+1]}`)
     }
-    console.log(data.length)
     
     //Determine difficulty
     let difficulty = "error";
