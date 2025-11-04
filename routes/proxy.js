@@ -25,11 +25,9 @@ router.get("/getLevelId", async (req, res) => {
                 ...req.query
             }).toString());
         const text = await response.text();
-        const levelData = processLevelResponse(text);
+        const levelData = await processLevelResponse(text);
 
         /* Update database if necessary */
-        // levelData is the level fetched from the boomlings database
-        // I now need to fetch the level from the mongo database
         const mongoLevelSearch = await Level.find({ id: req.query.str });
         if (mongoLevelSearch.length === 1) {
             const mongoLevel = mongoLevelSearch[0];
@@ -59,16 +57,42 @@ router.get("/getLevelId", async (req, res) => {
     }
 });
 
-function processLevelResponse(responseString) {
-    console.log(responseString);
-    const firstLevel = responseString.split("|")[0];
-    const parts = firstLevel.split(":");
+async function retrieveCreatorUsername(userid) {
+    try {
+        console.log("Searching for user with ID", userid);
+        const response = await fetch ("http://www.boomlings.com/database/getGJUsers20.php", {
+            method: "POST",
+            headers: {
+                "User-Agent": "",
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: formatBody({
+                secret: "Wmfd2893gb7",
+                str: userid
+            })
+        });
+        const text = await response.text();
+        const username = processResponse(text)[1];
+        return username;
+    } catch (err) {
+        console.error("Error fetching username:", err);
+    }
+}
+
+function processResponse(responseString) {
+    const firstEntry = responseString.split("|")[0];
+    const parts = firstEntry.split(":");
     const data = [];
     for (let i = 0; i < parts.length; i += 2) {
         const index = parts[i];
         data[index] = parts[i + 1];
         console.log(`Index ${index}:   ${parts[i+1]}`)
     }
+    return data;
+}
+
+async function processLevelResponse(responseString) {
+    const data = processResponse(responseString);
     
     //Determine difficulty
     let difficulty = "error";
@@ -114,10 +138,12 @@ function processLevelResponse(responseString) {
         rating = "Mythic";
     }
 
+    const creator = await retrieveCreatorUsername(data[6]);
+
     const level = {
         id: data[1],
         name: data[2],
-        creator: data[6], // Currently only creator ID, not username
+        creator,
         difficulty,
         stars: data[18],
         rating,
