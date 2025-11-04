@@ -1,9 +1,12 @@
 import express from "express";
+import Level from "../models/Level.js";
+import { mongo } from "mongoose";
 
 const router = express.Router();
 
 router.get("/getLevelId", async (req, res) => {
     try {
+        /* Handle response */
         const response = await fetch("http://www.boomlings.com/database/getGJLevels21.php", {
             method: "POST",
             headers: {
@@ -23,6 +26,32 @@ router.get("/getLevelId", async (req, res) => {
             }).toString());
         const text = await response.text();
         const levelData = processLevelResponse(text);
+
+        /* Update database if necessary */
+        // levelData is the level fetched from the boomlings database
+        // I now need to fetch the level from the mongo database
+        const mongoLevelSearch = await Level.find({ id: req.query.str });
+        if (mongoLevelSearch.length === 1) {
+            const mongoLevel = mongoLevelSearch[0];
+
+            // Compare fields
+            const updates = {};
+            for (const key of Object.keys(levelData)) {
+                if (levelData[key].toString() !== mongoLevel[key].toString()) {
+                    updates[key] = levelData[key];
+                }
+            }
+
+            // Update mongodb fields if necessary
+            if (Object.keys(updates).length > 0) {
+                await Level.updateOne({id: mongoLevel.id }, {$set: updates});
+                console.log(`Updated level in database.\nWas: ${JSON.stringify(mongoLevel)}\nUpdated: ${JSON.stringify(updates)}`);
+            } else {
+                console.log("No update needed.");
+            }
+        } 
+
+        /* Return success */
         res.json({ success: true, data: levelData });
     } catch (err) {
         console.error("Proxy error:", err);
@@ -106,21 +135,3 @@ function formatBody(body) {
 }
 
 export default router;
-
-/*
-LevelType = {
-    id: number;             #1
-    name: string;           #2
-    creator: string;        #6 as a player ID
-    difficulty: string;     #9 (10=easy, 20=normal, 30=hard, 40=harder, 50=insane)
-                            #17 (boolean; is it a demon?)
-                            #43 (demon difficulty: 3=easy, 4=medium, 0=hard, 5=insane, 6=extreme)
-
-    stars:                  #18
-    rating: string;         #19 (0=not featued, >0 = featured)
-                            #42 (0=not epic, 1=epic, 2=legendary, 3=mythic)
-
-    coin_count: number;     #37
-    coins_rated: boolean;   #38
-}
-    */
