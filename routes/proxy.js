@@ -27,6 +27,8 @@ router.get("/getLevelId", async (req, res) => {
         const text = await response.text();
         const levelData = await processLevelResponse(text);
 
+        console.log(text);
+
         /* Update database if necessary */
         const mongoLevelSearch = await Level.find({ id: req.query.str });
         if (mongoLevelSearch.length === 1) {
@@ -96,29 +98,33 @@ async function processLevelResponse(responseString) {
     
     //Determine difficulty
     let difficulty = "error";
-    if (data[17] == 0) {
-        if (data[9] == 10) {
-            difficulty = "Easy";
-        } else if (data[9] == 20){
-            difficulty = "Normal";
-        } else if (data[9] == 30){
-            difficulty = "Hard";
-        } else if (data[9] == 40){
-            difficulty = "Harder";
-        } else if (data[9] == 50){
-            difficulty = "Insane";
-        }
+    if (data[25] == 1) {
+        difficulty = "Auto"
     } else {
-        if (data[43] == 3) {
-            difficulty = "Easy Demon";
-        } else if (data[43] == 4) {
-            difficulty = "Medium Demon";
-        } else if (data[43] == 0) {
-            difficulty = "Hard Demon";
-        } else if (data[43] == 5) {
-            difficulty = "Insane Demon";
-        } else if (data[43] == 6) {
-            difficulty = "Extreme Demon";
+        if (data[17] == 0) {
+            if (data[9] == 10) {
+                difficulty = "Easy";
+            } else if (data[9] == 20){
+                difficulty = "Normal";
+            } else if (data[9] == 30){
+                difficulty = "Hard";
+            } else if (data[9] == 40){
+                difficulty = "Harder";
+            } else if (data[9] == 50){
+                difficulty = "Insane";
+            }
+        } else {
+            if (data[43] == 3) {
+                difficulty = "Easy Demon";
+            } else if (data[43] == 4) {
+                difficulty = "Medium Demon";
+            } else if (data[43] == 0) {
+                difficulty = "Hard Demon";
+            } else if (data[43] == 5) {
+                difficulty = "Insane Demon";
+            } else if (data[43] == 6) {
+                difficulty = "Extreme Demon";
+            }
         }
     }
 
@@ -138,6 +144,22 @@ async function processLevelResponse(responseString) {
         rating = "Mythic";
     }
 
+    //Determine level length
+    let length = "error";
+    if (data[15] == 0) {
+        length = "Tiny";
+    } else if (data[15] == 1) {
+        length = "Short";
+    } else if (data[15] == 2) {
+        length = "Medium";
+    } else if (data[15] == 3) {
+        length = "Long";
+    } else if (data[15] == 4) {
+        length = "XL";
+    } else if (data[15] == 5) {
+        length = "Plat.";
+    }
+
     const creator = await retrieveCreatorUsername(data[6]);
 
     const level = {
@@ -148,7 +170,8 @@ async function processLevelResponse(responseString) {
         stars: data[18],
         rating,
         coin_count: data[37],
-        coins_rated: data[38] == 1 ? true : false
+        coins_rated: data[38] == 1 ? true : false,
+        length
     }
     console.log(`Level data: ${JSON.stringify(level)}`)
     return level;

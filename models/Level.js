@@ -8,7 +8,8 @@ const levelSchema = new mongoose.Schema({
     stars: { type: Number, required: false, unique: false },
     rating: { type: String, required: false, unique: false },
     coin_count: { type: Number, required: false, unique: false },
-    coins_rated: { type: Boolean, required: false, unique: false }
+    coins_rated: { type: Boolean, required: false, unique: false },
+    length: {type: String, required: false, unique: false }
 });
 
 const Level = mongoose.model("Level", levelSchema);
