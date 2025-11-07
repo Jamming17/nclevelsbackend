@@ -1,5 +1,5 @@
 import express from "express";
-import Level from "../models/Level.js";
+import { ExtendedDemons, ExtendedNonDemons, MainDemons, MainNonDemons } from "../models/Level.js";
 import { mongo } from "mongoose";
 
 const router = express.Router();
@@ -30,26 +30,41 @@ router.get("/getLevelId", async (req, res) => {
         console.log(text);
 
         /* Update database if necessary */
-        const mongoLevelSearch = await Level.find({ id: req.query.str });
-        if (mongoLevelSearch.length === 1) {
-            const mongoLevel = mongoLevelSearch[0];
-
-            // Compare fields
-            const updates = {};
-            for (const key of Object.keys(levelData)) {
-                if (levelData[key].toString() !== mongoLevel[key].toString()) {
-                    updates[key] = levelData[key];
+        let targetCollection = null;
+        let mongoLevelSearch = null;
+        for (const [name, model] of Object.entries({ExtendedDemons, ExtendedNonDemons, MainDemons, MainNonDemons})) {
+            const result = await model.find({ id: req.query.str });
+            if (result.length > 0) {
+                targetCollection = model;
+                mongoLevelSearch = result;
+                console.log("Found level in", targetCollection);
+                break;
+            }
+        }
+        if (!targetCollection) {
+            console.error("Level not found in any collection.");
+        } else {
+            console.log(mongoLevelSearch);
+            if (mongoLevelSearch.length === 1) {
+                const mongoLevel = mongoLevelSearch[0];
+                // Compare fields
+                const updates = {};
+                console.log(levelData);
+                for (const key of Object.keys(levelData)) {
+                    if (levelData[key].toString() !== mongoLevel[key].toString()) {
+                        updates[key] = levelData[key];
+                    }
                 }
-            }
 
-            // Update mongodb fields if necessary
-            if (Object.keys(updates).length > 0) {
-                await Level.updateOne({id: mongoLevel.id }, {$set: updates});
-                console.log(`Updated level in database.\nWas: ${JSON.stringify(mongoLevel)}\nUpdated: ${JSON.stringify(updates)}`);
-            } else {
-                console.log("No update needed.");
-            }
-        } 
+                // Update mongodb fields if necessary
+                if (Object.keys(updates).length > 0) {
+                    await targetCollection.updateOne({id: mongoLevel.id }, {$set: updates});
+                    console.log(`Updated level in database.\nWas: ${JSON.stringify(mongoLevel)}\nUpdated: ${JSON.stringify(updates)}`);
+                } else {
+                    console.log("No update needed.");
+                }
+            } 
+        }
 
         /* Return success */
         res.json({ success: true, data: levelData });
@@ -74,6 +89,9 @@ async function retrieveCreatorUsername(userid) {
             })
         });
         const text = await response.text();
+        if (text == -1) {
+            return "-";
+        }
         const username = processResponse(text)[1];
         return username;
     } catch (err) {
@@ -160,6 +178,7 @@ async function processLevelResponse(responseString) {
         length = "Plat.";
     }
 
+    //Handle usernames
     const creator = await retrieveCreatorUsername(data[6]);
 
     const level = {

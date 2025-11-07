@@ -12,5 +12,7 @@ const levelSchema = new mongoose.Schema({
     length: {type: String, required: false, unique: false }
 });
 
-const Level = mongoose.model("Level", levelSchema);
-export default Level;
+export const MainDemons = mongoose.model("main-demons", levelSchema);
+export const ExtendedDemons = mongoose.model("extended-demons", levelSchema);
+export const MainNonDemons = mongoose.model("main-non-demons", levelSchema);
+export const ExtendedNonDemons = mongoose.model("extended-non-demons", levelSchema);
