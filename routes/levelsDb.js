@@ -25,7 +25,7 @@ router.get("/getLevels", async (req, res) => {
             res.json({ success: true, data: levels });
         } else {
             console.error("Incorrect filters");
-            res.status(500).json({ success: false, message: "Incorrect filters" });
+            res.status(400).json({ success: false, message: "Incorrect filters" });
         }
     } catch(err) {
         console.error("Error fetching levels from MongoDB:", err);
