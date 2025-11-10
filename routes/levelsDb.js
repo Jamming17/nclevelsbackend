@@ -1,5 +1,5 @@
 import express from "express";
-import { ExtendedDemons, ExtendedNonDemons, MainDemons, MainNonDemons } from "../models/Level.js";
+import { Levels } from "../models/Level.js";
 
 const router = express.Router();
 
@@ -7,8 +7,11 @@ const router = express.Router();
 router.get("/getLevels", async (req, res) => {
     try {
         //Fetch from MongoDB
-        let levels = [];
-        const query = req.query.filter;
+        const levels = await Levels.find();
+        res.json({ success: true, data: levels });
+
+
+        /*const query = req.query.filter;
         if ((query.startsWith("main") || query.startsWith("all")) && (query.endsWith("demons") || query.endsWith("every"))) {
             levels = levels.concat(await MainDemons.find());
         }
@@ -26,7 +29,7 @@ router.get("/getLevels", async (req, res) => {
         } else {
             console.error("Incorrect filters");
             res.status(400).json({ success: false, message: "Incorrect filters" });
-        }
+        }*/
     } catch(err) {
         console.error("Error fetching levels from MongoDB:", err);
         res.status(500).json({ success: false, message: "Internal server error while fetching level data"});

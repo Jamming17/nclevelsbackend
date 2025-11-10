@@ -1,5 +1,5 @@
 import express from "express";
-import { ExtendedDemons, ExtendedNonDemons, MainDemons, MainNonDemons } from "../models/Level.js";
+import { Levels } from "../models/Level.js";
 import { mongo } from "mongoose";
 
 const router = express.Router();
@@ -30,40 +30,32 @@ router.get("/getLevelId", async (req, res) => {
         console.log(text);
 
         /* Update database if necessary */
-        let targetCollection = null;
-        let mongoLevelSearch = null;
-        for (const [name, model] of Object.entries({ExtendedDemons, ExtendedNonDemons, MainDemons, MainNonDemons})) {
-            const result = await model.find({ id: req.query.str });
-            if (result.length > 0) {
-                targetCollection = model;
-                mongoLevelSearch = result;
-                console.log("Found level in", targetCollection);
-                break;
-            }
-        }
-        if (!targetCollection) {
-            console.error("Level not found in any collection.");
-        } else {
-            console.log(mongoLevelSearch);
-            if (mongoLevelSearch.length === 1) {
-                const mongoLevel = mongoLevelSearch[0];
-                // Compare fields
-                const updates = {};
-                console.log(levelData);
-                for (const key of Object.keys(levelData)) {
-                    if (levelData[key].toString() !== mongoLevel[key].toString()) {
-                        updates[key] = levelData[key];
-                    }
-                }
+        const mongoLevelSearch = await Levels.find({ id: req.query.str });
+        if (mongoLevelSearch.length === 1) {
+            const mongoLevel = mongoLevelSearch[0];
 
-                // Update mongodb fields if necessary
-                if (Object.keys(updates).length > 0) {
-                    await targetCollection.updateOne({id: mongoLevel.id }, {$set: updates});
-                    console.log(`Updated level in database.\nWas: ${JSON.stringify(mongoLevel)}\nUpdated: ${JSON.stringify(updates)}`);
-                } else {
-                    console.log("No update needed.");
+            // Compare fields
+            const updates = {};
+            console.log(levelData);
+            for (const key of Object.keys(levelData)) {
+                if (levelData[key].toString() !== mongoLevel[key].toString()) {
+                    updates[key] = levelData[key];
                 }
-            } 
+            }
+
+            // Update mongodb fields if necessary
+            if (Object.keys(updates).length > 0) {
+                await Levels.updateOne({id: mongoLevel.id }, {$set: updates});
+                console.log(`Updated level in database.\nWas: ${JSON.stringify(mongoLevel)}\nUpdated: ${JSON.stringify(updates)}`);
+            } else {
+                console.log("No update needed.");
+            }
+
+            // Add additional non-GD fields to the response
+            levelData.extra = mongoLevel.extra;
+            levelData.tags = mongoLevel.tags;
+        } else {
+            console.error("Level not found in datbases.");
         }
 
         /* Return success */

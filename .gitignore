@@ -1,3 +1,4 @@
 node_modules/
 .env
 addLevelsBulk.js
+id_lists/

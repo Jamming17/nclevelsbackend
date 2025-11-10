@@ -22,14 +22,14 @@ In MongoDB, create a database named `nclevels` and add a table with the schema f
 
 If you are running the database locally, use this:
 ```
-MONGO_URI=mongodb://127.0.0.1:27017/nclevels # If running locally
+MONGO_URI=mongodb://127.0.0.1:27017/nclevels
 ```
 If you are running the database using Atlas, use a link in this format:
 ```
 MONGO_URI=mongodb+src://<username>:<password>@<clustername>.mongodb.net/?retryWrites=true&w=majority
 ```
 
-Once the database is running and connected, add and manipulate records in the database using MongoDB CRUD commands which can be found in MongoDB's extensive documentation.
+Once the database is running and connected, create a collection named `levels`. You can add and manipulate records in the database using MongoDB CRUD commands which can be found in MongoDB's extensive documentation.
 
 To build and run the website locally, run the following command:
 ```bash
@@ -65,19 +65,11 @@ If RobTop's server was unreachable or another error occurred during data process
 ### /jack/getLevels
 This endpoint sends all database levels from the MongoDB database to the frontend with simple backend data filtering.
 
-This endpoint expects a GET request containing one query parameter named `filter` which determines the database table(s) to get return the level data from. This filter string should contain two words separated by a hyphen:
-- The first word should be `main` (for main list levels only), `extended` (for extras only) or `all` (for both)
-- The second word should be `demons`, `non` or `every`
-For example, `main-demons` would return only the main list demon-difficulty levels whereas `all-every` returns all levels regardless of whether they are mainlist/extra or demons/non-demons.
+This endpoint expects a GET request containing no query parameters.
 
 If successful, the function returns HTTP code 200 and the following response in JSON format:
 ```json
 {success: true, data: [levels]}
-```
-
-If the `filter` query parameter is not an expected string, the function returns HTTP code 400 and the following response in JSON format:
-```json
-{success: false, message: "Incorrect filters"}
 ```
 
 If any other server error occurs, the function returns HTTP code 500 and the following response in JSON format:
@@ -86,6 +78,5 @@ If any other server error occurs, the function returns HTTP code 500 and the fol
 ```
 
 ## Planned Features and Changes
-- Combine levels into a single database with a field whether it is an extra or not and for other tags
 - Improved error handling
 - Thorough tests made with Jest
