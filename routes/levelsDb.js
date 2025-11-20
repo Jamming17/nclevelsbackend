@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/getLevels", async (req, res) => {
     try {
         //Fetch from MongoDB
-        const levels = await Levels.find();
+        const levels = await Levels.find().select("-_id");
         res.json({ success: true, data: levels });
 
 
